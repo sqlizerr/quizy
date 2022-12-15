@@ -23,12 +23,14 @@ DEFAULT_AUTO_FIELD='django.db.models.AutoField'
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'tbdy@fqf+)_@_nv71f@%8rqh02s%d@_l@_iemu35@^*r_00m9l'
+SECRET_KEY = os.getenv('SECRET_KEY', 'tbdy@fqf+)_@_nv71f@%8rqh02s%d@_l@_iemu35@^*r_00m9l')
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [os.environ['WEBSITE_HOSTNAME']] if 'WEBSITE_HOSTNAME' in os.environ else []
+CSRF_TRUSTED_ORIGINS = ['https://'+ os.environ['WEBSITE_HOSTNAME']] if 'WEBSITE_HOSTNAME' in os.environ else []
 
 
 # Application definition
@@ -58,6 +60,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'  
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = (str(BASE_DIR.joinpath('static')),)
+
+hostname = os.environ['DBHOST']
+
 ROOT_URLCONF = 'lets_quiz.urls'
 
 TEMPLATES = [
@@ -84,8 +92,11 @@ WSGI_APPLICATION = 'lets_quiz.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ['DBNAME'],
+        'HOST': os.environ['DBHOST'],
+        'USER': os.environ['DBUSER'],
+        'PASSWORD': os.environ['DBPASS'] 
     }
 }
 
@@ -123,8 +134,8 @@ USE_L10N = True
 USE_TZ = True
 
 
-STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_URL = 'static/'
+
 
 # STATICFILES_DIRS = [
 #     # will not be served, long term storage
@@ -136,6 +147,4 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 LOGIN_URL = '/login'
 LOGIN_REDIRECT_URL = '/user_home'
 
-import dj_database_url
-db_from_env = dj_database_url.config(conn_max_age=500)
-DATABASES['default'].update(db_from_env)
+
